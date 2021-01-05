@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "allowJs": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "src/@types"],
+    "baseUrl": "./src",
+    "paths": {
+      "@repository/*": ["./database/repository/*"],
+      "@controllers/*": ["./app/controllers/*"],
+      "@config/*": ["./config/*"],
+      "@middlewares/*": ["./app/middlewares/*"],
+      "@interfaces/*": ["./interfaces/*"],
+      "@entity/*": ["./database/entity/*"],
+      "@exceptions/*": ["./app/exceptions/*"],
+      "@jobs/*": ["./app/jobs/*"],
+      "@routes/*": ["./app/routes/*"],
+      "@utils/*": ["./app/utils/*"],
+      "@services/*": ["./app/services/*"]
+    }
+  },
+  "include": ["src", "__tests__"]
+}
