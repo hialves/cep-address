@@ -1,3 +1,7 @@
 export {} from './address.exception'
 export { HttpException } from './http.exception'
-export { InternalServerErrorException } from './server.exception'
+export {
+  InternalServerErrorException,
+  InvalidFieldValueException,
+  ContentNotFoundException,
+} from './server.exception'

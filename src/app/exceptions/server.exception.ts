@@ -1,4 +1,3 @@
-import { capitalizeFirst } from '@utils/helpers'
 import { HttpException } from './http.exception'
 
 export class InternalServerErrorException extends HttpException {
@@ -11,6 +10,12 @@ export class InternalServerErrorException extends HttpException {
 
 export class InvalidFieldValueException extends HttpException {
   constructor(field: string) {
-    super(422, `${capitalizeFirst(field)} a valid must be provided`)
+    super(422, `A valid ${field} field must be provided`)
+  }
+}
+
+export class ContentNotFoundException extends HttpException {
+  constructor(id: string) {
+    super(404, `Content not found with id: ${id}`)
   }
 }
