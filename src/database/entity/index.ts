@@ -1,0 +1,5 @@
+export { default as AddressEntity } from './address.entity'
+export { default as CityEntity } from './city.entity'
+export { default as DistrictEntity } from './district.entity'
+export { default as PublicPlaceEntity } from './public-places.entity'
+export { default as StateEntity } from './states.entity'
