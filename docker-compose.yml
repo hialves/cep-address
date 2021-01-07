@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  cep-address:
+    container_name: cep-address
+    build: .
+    command: npm run dev
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/cep-address
+    networks:
+      - cep-address-network
+    ports:
+      - '3333:3333'
+
+  postgres:
+    container_name: postgres-cep-address
+    image: postgres:12-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+    networks:
+      - cep-address-network
+    ports:
+      - '5433:5432'
+
+  pgadmin:
+    container_name: pgadmin-cep-address
+    image: dpage/pgadmin4
+    volumes:
+      - .:/usr/pgadmin/
+    ports:
+      - 15433:80
+    networks:
+      - cep-address-network
+    links:
+      - 'postgres:pgsql-server'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+
+networks:
+  cep-address-network:
+    driver: bridge
