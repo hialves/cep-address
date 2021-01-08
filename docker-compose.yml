@@ -25,7 +25,7 @@ services:
     networks:
       - cep-address-network
     ports:
-      - '5433:5432'
+      - '${POSTGRES_PORT}:5432'
 
   pgadmin:
     container_name: pgadmin-cep-address
@@ -33,7 +33,7 @@ services:
     volumes:
       - .:/usr/pgadmin/
     ports:
-      - 15433:80
+      - 15432:80
     networks:
       - cep-address-network
     links:
