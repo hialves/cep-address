@@ -19,3 +19,15 @@ export class ContentNotFoundException extends HttpException {
     super(404, `Content not found with id: ${id}`)
   }
 }
+
+export class RouteNotImplementedException extends HttpException {
+  constructor(path: string) {
+    super(400, path)
+  }
+}
+
+export class CustomException extends HttpException {
+  constructor(message: string) {
+    super(400, message)
+  }
+}
