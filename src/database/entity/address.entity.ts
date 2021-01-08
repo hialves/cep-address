@@ -4,6 +4,10 @@ import { EntityBase } from './base'
 
 export interface IAddress {
   cep: string
+  state: StateEntity
+  city: CityEntity
+  district: DistrictEntity
+  publicPlace: PublicPlaceEntity
 }
 
 @Entity({ name: 'address' })
