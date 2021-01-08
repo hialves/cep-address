@@ -2,12 +2,14 @@ import { Entity, Column, ManyToOne, OneToMany } from 'typeorm'
 import { DistrictEntity, StateEntity } from '.'
 import { EntityBase } from './base'
 
-export interface ICities {
+export interface ICity {
   name: string
+  state: StateEntity
+  districts: DistrictEntity[]
 }
 
 @Entity({ name: 'city' })
-class Cities extends EntityBase implements ICities {
+class City extends EntityBase implements ICity {
   @Column()
   name: string
 
@@ -15,7 +17,7 @@ class Cities extends EntityBase implements ICities {
   state: StateEntity
 
   @OneToMany(() => DistrictEntity, (district) => district.city)
-  district: DistrictEntity
+  districts: DistrictEntity[]
 }
 
-export default Cities
+export default City

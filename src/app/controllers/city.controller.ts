@@ -18,7 +18,7 @@ class CityController extends BaseController<CityEntity> {
     if (isValid(search)) {
       const data = await this.repository.find({
         where: { name: ILike(`%${search}%`) },
-        relations: ['state', 'district'],
+        relations: ['state', 'districts'],
       })
 
       JsonResponse(res, data)

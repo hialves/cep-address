@@ -18,7 +18,7 @@ class DistrictController extends BaseController<DistrictEntity> {
     if (isValid(search)) {
       const data = await this.repository.find({
         where: { name: ILike(`%${search}%`) },
-        relations: ['city', 'publicPlace'],
+        relations: ['city', 'publicPlaces'],
       })
 
       JsonResponse(res, data)
