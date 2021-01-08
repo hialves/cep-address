@@ -1,12 +1,13 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class StatesMigration1609972156244 implements MigrationInterface {
+export class StateMigration1609972156244 implements MigrationInterface {
   
   public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(
 			`CREATE TABLE "state" (
 				id serial PRIMARY KEY, 
-				name VARCHAR (50) NOT NULL, 
+        name VARCHAR (50) NOT NULL, 
+        uf VARCHAR (2) NOT NULL,
 				created_at TIMESTAMP DEFAULT NOW(), 
 				updated_at TIMESTAMP DEFAULT NOW()
 			);`,

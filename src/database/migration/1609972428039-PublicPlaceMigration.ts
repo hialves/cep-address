@@ -1,6 +1,6 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class PublicPlacesMigration1609972428039 implements MigrationInterface {
+export class PublicPlaceMigration1609972428039 implements MigrationInterface {
   
   public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(
