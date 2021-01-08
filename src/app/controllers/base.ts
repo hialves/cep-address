@@ -3,10 +3,12 @@ import { EntityTarget, getRepository, Repository } from 'typeorm'
 
 import { JsonResponse, ContentDeleted } from '@utils/responses'
 import { ContentNotFoundException } from '@exceptions/index'
+import { RouteNotImplementedException } from '@exceptions/server.exception'
 
 export interface IBaseController {
   findAll: (req: Request, res: Response) => Promise<void>
   findById: (req: Request, res: Response, next: NextFunction) => Promise<void>
+  create: (req: Request, res: Response, next: NextFunction) => Promise<void>
   delete: (req: Request, res: Response, next: NextFunction) => Promise<void>
   update: (req: Request, res: Response, next: NextFunction) => Promise<void>
 }
@@ -16,6 +18,10 @@ export default abstract class BaseController<T> implements IBaseController {
 
   constructor(entity: EntityTarget<T>) {
     this.repository = getRepository(entity)
+  }
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    next(new RouteNotImplementedException(req.path))
   }
 
   async findAll(req: Request, res: Response) {
