@@ -27,7 +27,7 @@ export class RouteNotImplementedException extends HttpException {
 }
 
 export class CustomException extends HttpException {
-  constructor(message: string) {
-    super(400, message)
+  constructor(message: string, status: number = 400) {
+    super(status, message)
   }
 }
