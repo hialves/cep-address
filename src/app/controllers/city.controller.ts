@@ -6,6 +6,7 @@ import BaseController from './base'
 import { CityEntity, StateEntity } from '@entity/index'
 import { isValid } from '@utils/helpers'
 import {
+  ContentNotFoundException,
   InternalServerErrorException,
   InvalidFieldValueException,
 } from '@exceptions/index'
@@ -50,7 +51,7 @@ class CityController extends BaseController<CityEntity> {
         next(new InternalServerErrorException(e.message))
       }
     } else {
-      // TODO
+      if (!state) next(new ContentNotFoundException(stateId, 'State'))
     }
   }
 }

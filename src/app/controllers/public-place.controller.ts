@@ -6,6 +6,7 @@ import BaseController from './base'
 import { DistrictEntity, PublicPlaceEntity } from '@entity/index'
 import { isValid } from '@utils/helpers'
 import {
+  ContentNotFoundException,
   InternalServerErrorException,
   InvalidFieldValueException,
 } from '@exceptions/index'
@@ -50,7 +51,7 @@ class PublicPlaceController extends BaseController<PublicPlaceEntity> {
         next(new InternalServerErrorException(e.message))
       }
     } else {
-      // TODO
+      if (!district) next(new ContentNotFoundException(districtId, 'District'))
     }
   }
 }

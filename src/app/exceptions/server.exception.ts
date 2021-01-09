@@ -15,8 +15,8 @@ export class InvalidFieldValueException extends HttpException {
 }
 
 export class ContentNotFoundException extends HttpException {
-  constructor(id: string) {
-    super(404, `Content not found with id: ${id}`)
+  constructor(id: string | number, field?: string) {
+    super(404, `${field || 'Content'} not found with id: ${id}`)
   }
 }
 

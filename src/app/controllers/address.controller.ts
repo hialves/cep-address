@@ -1,4 +1,4 @@
-import { getRepository, ILike } from 'typeorm'
+import { FindManyOptions, getRepository, ILike, JoinOptions } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
 import { ContentCreated, JsonResponse } from '@utils/responses'
@@ -23,12 +23,12 @@ class AddressController extends BaseController<AddressEntity> {
     super(AddressEntity)
   }
 
+  // Similar a findByTextFilter, mas consome menos recurso para realizar a busca
   async findByKey(req: Request, res: Response, next: NextFunction) {
-    const { key, search } = req.body
+    const { key, search } = req.params
     const page = req.query.page || 0
 
     const allowedKeyValues = [
-      'cep',
       'complement',
       'state',
       'city',
@@ -36,13 +36,35 @@ class AddressController extends BaseController<AddressEntity> {
       'publicPlace',
     ]
 
+    const fields = [
+      { key: 'complement', fk: false },
+      { key: 'state', fk: true },
+      { key: 'city', fk: true },
+      { key: 'district', fk: true },
+      { key: 'publicPlace', fk: true },
+    ]
+
+    const field = fields.find((field) => field.key === key)
+
     //prettier-ignore
-    if (isValid(key) && isValid(search) && allowedKeyValues.includes(key) ) {
-      const data = await this.repository.find({
-        where: { [key]: search },
+    if (isValid(key) && isValid(search) && allowedKeyValues.includes(key) && field) {
+      let findOptions: FindManyOptions = {
+        where: { [field.key]: ILike(`%${search}%`) },
+        relations: ['state', 'city', 'district', 'publicPlace'],
         skip: Number(page),
         take: 20,
-      })
+      }
+
+      if(field.fk) {
+        const join: JoinOptions = {
+          alias: key,
+          leftJoinAndSelect: { [key]: `address.${key}`}
+        }
+
+        findOptions.join = join
+      }
+
+      const data = await this.repository.find(findOptions)
 
       JsonResponse(res, data)
     }else {
@@ -52,13 +74,15 @@ class AddressController extends BaseController<AddressEntity> {
   }
 
   async findByTextFilter(req: Request, res: Response) {
-    const { complement, state, city, district } = req.body
+    const { complement, state, city, district, publicPlace } = req.body
+    const page = req.query.page || 0
 
     const fields = [
-      { key: 'complement', value: complement },
-      { key: 'state', value: state },
-      { key: 'city', value: city },
-      { key: 'district', value: district },
+      { key: 'complement', value: complement, fk: false },
+      { key: 'state', value: state, fk: true },
+      { key: 'city', value: city, fk: true },
+      { key: 'district', value: district, fk: true },
+      { key: 'publicPlace', value: publicPlace, fk: true },
     ]
 
     const query = this.repository.createQueryBuilder().select()
@@ -66,19 +90,25 @@ class AddressController extends BaseController<AddressEntity> {
 
     fields.map((field) => {
       if (isValid(field)) {
-        queryHasWhere = true
-        const whereSql = `address.${field.key} ILIKE :value`
+        let whereSql = `address.${field.key} ILIKE :value`
         const obj = { value: `%${field.value}%` }
+
+        if (field.fk) {
+          query.leftJoinAndSelect(`address.${field.key}`, field.key)
+          whereSql = `${field.key}.name ILIKE :value`
+        }
 
         // Verifica a necessidade de adicionar um AND no WHERE
         queryHasWhere
           ? query.andWhere(whereSql, obj)
           : query.where(whereSql, obj)
+
+        queryHasWhere = true
       }
     })
 
     if (queryHasWhere) {
-      const data = await query.getMany()
+      const data = await query.skip(Number(page)).take(20).getMany()
 
       JsonResponse(res, data)
     } else {
@@ -87,17 +117,17 @@ class AddressController extends BaseController<AddressEntity> {
   }
 
   async findByCep(req: Request, res: Response, next: NextFunction) {
-    const { search } = req.params
+    const { cep } = req.params
 
-    if (isValid(search)) {
+    if (isValid(cep)) {
       const data = await this.repository.find({
-        where: { cep: ILike(`%${search}%`) },
+        where: { cep },
         relations: ['state', 'city', 'district', 'publicPlace'],
       })
 
       JsonResponse(res, data)
     } else {
-      next(new InvalidFieldValueException('search'))
+      next(new InvalidFieldValueException('cep'))
     }
   }
 
@@ -135,11 +165,12 @@ class AddressController extends BaseController<AddressEntity> {
         next(new InternalServerErrorException(e.message))
       }
     } else {
-      if (!state) next(new InvalidFieldValueException('stateId'))
-      else if (!cityId) next(new InvalidFieldValueException('cityId'))
-      else if (!districtId) next(new InvalidFieldValueException('districtId'))
+      if (!state) next(new ContentNotFoundException(stateId, 'State'))
+      else if (!cityId) next(new ContentNotFoundException(cityId, 'City'))
+      else if (!districtId)
+        next(new ContentNotFoundException(districtId, 'District'))
       else if (!publicPlaceId)
-        next(new InvalidFieldValueException('publicPlaceId'))
+        next(new ContentNotFoundException(publicPlaceId, 'Public place'))
     }
   }
 }
