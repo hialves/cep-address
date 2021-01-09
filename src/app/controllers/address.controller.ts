@@ -1,11 +1,22 @@
-import { ILike } from 'typeorm'
+import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { JsonResponse } from '@utils/responses'
+import { ContentCreated, JsonResponse } from '@utils/responses'
 import BaseController from './base'
-import { AddressEntity } from '@entity/index'
+import {
+  AddressEntity,
+  CityEntity,
+  DistrictEntity,
+  PublicPlaceEntity,
+  StateEntity,
+} from '@entity/index'
 import { isValid } from '@utils/helpers'
-import { InvalidFieldValueException } from '@exceptions/index'
+import {
+  ContentNotFoundException,
+  InternalServerErrorException,
+  InvalidFieldValueException,
+} from '@exceptions/index'
+import AddressValidator from './validators/address.validator'
 
 class AddressController extends BaseController<AddressEntity> {
   constructor() {
@@ -89,37 +100,48 @@ class AddressController extends BaseController<AddressEntity> {
       next(new InvalidFieldValueException('search'))
     }
   }
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    const {
+      cep,
+      complement,
+      stateId,
+      cityId,
+      districtId,
+      publicPlaceId,
+    } = req.body
+
+    const state = await getRepository(StateEntity).findOne(stateId)
+    const city = await getRepository(CityEntity).findOne(cityId)
+    const district = await getRepository(DistrictEntity).findOne(districtId)
+    //prettier-ignore
+    const publicPlace = await getRepository(PublicPlaceEntity).findOne(publicPlaceId)
+
+    if (state && city && district && publicPlace) {
+      let address = new AddressEntity()
+      address.cep = cep
+      address.complement = complement
+      address.state = state
+      address.city = city
+      address.district = district
+      address.publicPlace = publicPlace
+
+      try {
+        if (await AddressValidator.create(address, next)) {
+          const result = await this.repository.save(city)
+          ContentCreated(res, result)
+        }
+      } catch (e) {
+        next(new InternalServerErrorException(e.message))
+      }
+    } else {
+      if (!state) next(new InvalidFieldValueException('stateId'))
+      else if (!cityId) next(new InvalidFieldValueException('cityId'))
+      else if (!districtId) next(new InvalidFieldValueException('districtId'))
+      else if (!publicPlaceId)
+        next(new InvalidFieldValueException('publicPlaceId'))
+    }
+  }
 }
 
 export default new AddressController()
-
-/**
- * const data = await this.repository.find({
-        join: { leftJoinAndSelect: {alias} },
-        where: { cep: ILike(`%${search}%`) },
-        
-        
-        relations: ['state', 'city', 'district', 'publicPlace'],
-      })
- */
-
-/**
-  * if (isValid(complement))
-      query.where('address.complement ILIKE :complement', {
-        complement: `%${complement}%`,
-      })
-    if (isValid(state)) {
-      query.leftJoinAndSelect('address.state', 'state')
-      query.andWhere('state.name ILIKE :state', { state: `%${state}%` })
-    }
-    if (isValid(city)) {
-      query.leftJoinAndSelect('address.city', 'city')
-      query.andWhere('city.name ILIKE :city', { city: `%${city}%` })
-    }
-    if (isValid(district)) {
-      query.leftJoinAndSelect('address.district', 'district')
-      query.andWhere('district.name ILIKE :district', {
-        district: `%${district}%`,
-      })
-    }
-  */

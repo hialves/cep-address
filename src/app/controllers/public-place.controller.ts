@@ -1,11 +1,15 @@
-import { ILike } from 'typeorm'
+import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { JsonResponse } from '@utils/responses'
+import { ContentCreated, JsonResponse } from '@utils/responses'
 import BaseController from './base'
-import { PublicPlaceEntity } from '@entity/index'
+import { DistrictEntity, PublicPlaceEntity } from '@entity/index'
 import { isValid } from '@utils/helpers'
-import { InvalidFieldValueException } from '@exceptions/index'
+import {
+  InternalServerErrorException,
+  InvalidFieldValueException,
+} from '@exceptions/index'
+import PublicPlaceValidator from './validators/public-place.validator'
 
 class PublicPlaceController extends BaseController<PublicPlaceEntity> {
   constructor() {
@@ -24,6 +28,29 @@ class PublicPlaceController extends BaseController<PublicPlaceEntity> {
       JsonResponse(res, data)
     } else {
       next(new InvalidFieldValueException('search'))
+    }
+  }
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    const { name, districtId } = req.body
+
+    const district = await getRepository(DistrictEntity).findOne(districtId)
+
+    if (district) {
+      let publicPlace = new PublicPlaceEntity()
+      publicPlace.name = name
+      publicPlace.district = district
+
+      try {
+        if (await PublicPlaceValidator.create(publicPlace, next)) {
+          const result = await this.repository.save(publicPlace)
+          ContentCreated(res, result)
+        }
+      } catch (e) {
+        next(new InternalServerErrorException(e.message))
+      }
+    } else {
+      // TODO
     }
   }
 }

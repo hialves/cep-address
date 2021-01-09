@@ -4,6 +4,7 @@ import { EntityBase } from './base'
 
 export interface IAddress {
   cep: string
+  complement: string
   state: StateEntity
   city: CityEntity
   district: DistrictEntity
@@ -14,6 +15,9 @@ export interface IAddress {
 class Address extends EntityBase implements IAddress {
   @Column()
   cep: string
+
+  @Column()
+  complement: string
 
   @OneToOne(() => StateEntity)
   @JoinColumn()

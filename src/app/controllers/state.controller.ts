@@ -1,7 +1,7 @@
 import { ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { JsonResponse } from '@utils/responses'
+import { ContentCreated, JsonResponse } from '@utils/responses'
 import BaseController from './base'
 import { StateEntity } from '@entity/index'
 import { isValid } from '@utils/helpers'
@@ -40,7 +40,8 @@ class StateController extends BaseController<StateEntity> {
 
     try {
       if (await StateValidator.create(state, next)) {
-        this.repository.save(state)
+        const result = await this.repository.save(state)
+        ContentCreated(res, result)
       }
     } catch (e) {
       next(new InternalServerErrorException(e.message))

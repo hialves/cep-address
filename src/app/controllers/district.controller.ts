@@ -1,11 +1,15 @@
-import { ILike } from 'typeorm'
+import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { JsonResponse } from '@utils/responses'
+import { ContentCreated, JsonResponse } from '@utils/responses'
 import BaseController from './base'
-import { DistrictEntity } from '@entity/index'
+import { CityEntity, DistrictEntity } from '@entity/index'
 import { isValid } from '@utils/helpers'
-import { InvalidFieldValueException } from '@exceptions/index'
+import {
+  InternalServerErrorException,
+  InvalidFieldValueException,
+} from '@exceptions/index'
+import DistrictValidator from './validators/district.validator'
 
 class DistrictController extends BaseController<DistrictEntity> {
   constructor() {
@@ -24,6 +28,29 @@ class DistrictController extends BaseController<DistrictEntity> {
       JsonResponse(res, data)
     } else {
       next(new InvalidFieldValueException('search'))
+    }
+  }
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    const { name, cityId } = req.body
+
+    const city = await getRepository(CityEntity).findOne(cityId)
+
+    if (city) {
+      let district = new DistrictEntity()
+      district.name = name
+      district.city = city
+
+      try {
+        if (await DistrictValidator.create(district, next)) {
+          const result = await this.repository.save(district)
+          ContentCreated(res, result)
+        }
+      } catch (e) {
+        next(new InternalServerErrorException(e.message))
+      }
+    } else {
+      // TODO
     }
   }
 }
