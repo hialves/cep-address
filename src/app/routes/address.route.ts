@@ -1,4 +1,5 @@
 import { AddressController } from '@controllers/index'
+import { restrict } from '@middlewares/jwt'
 import express from 'express'
 
 const addressRoutes = express.Router()
@@ -11,7 +12,7 @@ addressRoutes.get(
   AddressController.findByKey,
 )
 addressRoutes.post('/address/find-by-text', AddressController.findByTextFilter)
-addressRoutes.post('/address', AddressController.create)
+addressRoutes.post('/address', restrict, AddressController.create)
 addressRoutes.put('/address/:id', AddressController.update)
 addressRoutes.delete('/address/:id', AddressController.delete)
 
