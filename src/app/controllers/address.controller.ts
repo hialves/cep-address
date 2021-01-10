@@ -10,7 +10,7 @@ import {
   PublicPlaceEntity,
   StateEntity,
 } from '@entity/index'
-import { isValid } from '@utils/helpers'
+import { formatCep, isValid } from '@utils/helpers'
 import {
   ContentNotFoundException,
   InternalServerErrorException,
@@ -149,7 +149,7 @@ class AddressController extends BaseController<AddressEntity> {
 
     if (state && city && district && publicPlace) {
       let address = new AddressEntity()
-      address.cep = cep
+      address.cep = formatCep(cep)
       address.complement = complement
       address.state = state
       address.city = city
