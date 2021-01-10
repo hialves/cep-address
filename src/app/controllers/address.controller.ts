@@ -1,8 +1,7 @@
 import { FindManyOptions, getRepository, ILike, JoinOptions } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { ContentCreated, JsonResponse } from '@utils/responses'
-import BaseController from './base'
+import { ContentCreated, ContentDeleted, JsonResponse } from '@utils/responses'
 import {
   AddressEntity,
   CityEntity,
@@ -18,15 +17,13 @@ import {
 } from '@exceptions/index'
 import AddressValidator from './validators/address.validator'
 
-class AddressController extends BaseController<AddressEntity> {
-  constructor() {
-    super(AddressEntity)
-  }
-
+class AddressController {
   // Similar a findByTextFilter, mas consome menos recurso para realizar a busca
   async findByKey(req: Request, res: Response, next: NextFunction) {
     const { key, search } = req.params
     const page = req.query.page || 0
+
+    const repository = getRepository(AddressEntity)
 
     const allowedKeyValues = [
       'complement',
@@ -64,7 +61,7 @@ class AddressController extends BaseController<AddressEntity> {
         findOptions.join = join
       }
 
-      const data = await this.repository.find(findOptions)
+      const data = await repository.find(findOptions)
 
       JsonResponse(res, data)
     }else {
@@ -77,6 +74,8 @@ class AddressController extends BaseController<AddressEntity> {
     const { complement, state, city, district, publicPlace } = req.body
     const page = req.query.page || 0
 
+    const repository = getRepository(AddressEntity)
+
     const fields = [
       { key: 'complement', value: complement, fk: false },
       { key: 'state', value: state, fk: true },
@@ -85,7 +84,7 @@ class AddressController extends BaseController<AddressEntity> {
       { key: 'publicPlace', value: publicPlace, fk: true },
     ]
 
-    const query = this.repository.createQueryBuilder().select()
+    const query = repository.createQueryBuilder().select()
     let queryHasWhere = false
 
     fields.map((field) => {
@@ -119,8 +118,10 @@ class AddressController extends BaseController<AddressEntity> {
   async findByCep(req: Request, res: Response, next: NextFunction) {
     const { cep } = req.params
 
+    const repository = getRepository(AddressEntity)
+
     if (isValid(cep)) {
-      const data = await this.repository.find({
+      const data = await repository.find({
         where: { cep },
         relations: ['state', 'city', 'district', 'publicPlace'],
       })
@@ -141,6 +142,8 @@ class AddressController extends BaseController<AddressEntity> {
       publicPlaceId,
     } = req.body
 
+    const repository = getRepository(AddressEntity)
+
     const state = await getRepository(StateEntity).findOne(stateId)
     const city = await getRepository(CityEntity).findOne(cityId)
     const district = await getRepository(DistrictEntity).findOne(districtId)
@@ -151,14 +154,14 @@ class AddressController extends BaseController<AddressEntity> {
       let address = new AddressEntity()
       address.cep = formatCep(cep)
       address.complement = complement
-      address.state = state
-      address.city = city
-      address.district = district
-      address.publicPlace = publicPlace
+      address.state = stateId
+      address.city = cityId
+      address.district = districtId
+      address.publicPlace = publicPlaceId
 
       try {
         if (await AddressValidator.create(address, next)) {
-          const result = await this.repository.save(city)
+          const result = await repository.save(city)
           ContentCreated(res, result)
         }
       } catch (e) {
@@ -171,6 +174,67 @@ class AddressController extends BaseController<AddressEntity> {
         next(new ContentNotFoundException(districtId, 'District'))
       else if (!publicPlaceId)
         next(new ContentNotFoundException(publicPlaceId, 'Public place'))
+    }
+  }
+
+  async findAll(req: Request, res: Response) {
+    const page = req.query.page || 0
+
+    const repository = getRepository(AddressEntity)
+
+    const data = await repository.find({
+      relations: ['state', 'city', 'district', 'publicPlace'],
+      skip: Number(page),
+      take: 20,
+    })
+
+    JsonResponse(res, data)
+  }
+
+  async findById(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params
+
+    const repository = getRepository(AddressEntity)
+
+    const item = await repository.findOne(id)
+
+    if (item) {
+      JsonResponse(res, item)
+    } else {
+      next(new ContentNotFoundException(id))
+    }
+  }
+
+  async delete(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params
+
+    const repository = getRepository(AddressEntity)
+
+    const found = repository.findOne(id)
+
+    if (found) {
+      await repository.delete(id)
+
+      ContentDeleted(res)
+    } else {
+      next(new ContentNotFoundException(id))
+    }
+  }
+
+  async update(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params
+    const item = req.body
+
+    const repository = getRepository(AddressEntity)
+
+    const found = repository.findOne(id)
+
+    if (found) {
+      const data = await repository.update(id, item)
+
+      JsonResponse(res, data)
+    } else {
+      next(new ContentNotFoundException(id))
     }
   }
 }

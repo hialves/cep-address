@@ -6,6 +6,7 @@ import http from 'http'
 import * as routes from '@routes/index'
 import { errorHandler } from '@middlewares/error'
 import { logger } from '@middlewares/logger'
+import { createConnection } from 'typeorm'
 
 class App {
   public app: express.Application
@@ -16,6 +17,7 @@ class App {
 
     this.initializeMiddlewares()
     this.initializeRoutes()
+    this.connectToTheDatabase()
   }
 
   public listen() {
@@ -41,6 +43,10 @@ class App {
     })
 
     this.app.use(errorHandler)
+  }
+
+  private async connectToTheDatabase() {
+    await createConnection()
   }
 }
 
