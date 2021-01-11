@@ -1,15 +1,14 @@
 import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { ContentCreated, ContentDeleted, JsonResponse } from '@utils/responses'
-import { StateEntity } from '@entity/index'
-import { isValid } from '@utils/helpers'
 import {
-  ContentNotFoundException,
-  InternalServerErrorException,
-  InvalidFieldValueException,
-} from '@exceptions/index'
-import StateValidator from './validators/state.validator'
+  ContentCreated,
+  ContentDeleted,
+  ContentNotFound,
+  JsonResponse,
+} from '@utils/responses'
+import { StateEntity } from '@entity/index'
+import { InternalServerErrorException } from '@exceptions/index'
 
 class StateController {
   async find(req: Request, res: Response, next: NextFunction) {
@@ -17,32 +16,26 @@ class StateController {
 
     const repository = getRepository(StateEntity)
 
-    if (isValid(search)) {
-      const data = await repository.find({
-        where: { name: ILike(`%${search}%`) },
-        relations: ['cities'],
-      })
+    const data = await repository.find({
+      where: { name: ILike(`%${search}%`) },
+      relations: ['cities'],
+    })
 
-      JsonResponse(res, data)
-    } else {
-      next(new InvalidFieldValueException('search'))
-    }
+    JsonResponse(res, data)
   }
 
   async create(req: Request, res: Response, next: NextFunction) {
     const { name, uf } = req.body
 
-    const repository = getRepository(StateEntity)
-
-    let state = new StateEntity()
-    state.name = name
-    state.uf = uf
-
     try {
-      if (await StateValidator.create(state, next)) {
-        const result = await repository.save(state)
-        ContentCreated(res, result)
-      }
+      const repository = getRepository(StateEntity)
+
+      let state = new StateEntity()
+      state.name = name
+      state.uf = uf
+
+      const result = await repository.save(state)
+      ContentCreated(res, result)
     } catch (e) {
       next(new InternalServerErrorException(e.message))
     }
@@ -71,7 +64,7 @@ class StateController {
     if (item) {
       JsonResponse(res, item)
     } else {
-      next(new ContentNotFoundException(id))
+      ContentNotFound(res, 'state', id)
     }
   }
 
@@ -79,30 +72,27 @@ class StateController {
     const { id } = req.params
 
     const repository = getRepository(StateEntity)
-    const found = repository.findOne(id)
-
-    if (found) {
+    try {
       await repository.delete(id)
 
       ContentDeleted(res)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
-    const item = req.body
+    const item: StateEntity = req.body
 
-    const repository = getRepository(StateEntity)
-    const found = repository.findOne(id)
+    try {
+      const repository = getRepository(StateEntity)
 
-    if (found) {
       const data = await repository.update(id, item)
 
       JsonResponse(res, data)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 }

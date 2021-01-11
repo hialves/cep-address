@@ -1,3 +1,4 @@
+import { IsNotEmpty, MaxLength, MinLength } from 'class-validator'
 import { Entity, Column, ManyToOne } from 'typeorm'
 import { DistrictEntity } from '.'
 import { EntityBase } from './base'
@@ -9,10 +10,17 @@ export interface IPublicPlace {
 
 @Entity({ name: 'public_place' })
 class PublicPlace extends EntityBase implements IPublicPlace {
+  @MinLength(2)
+  @MaxLength(50)
+  @IsNotEmpty()
   @Column()
   name: string
 
-  @ManyToOne(() => DistrictEntity, (district) => district.id)
+  @IsNotEmpty()
+  @ManyToOne(() => DistrictEntity, (district) => district.id, {
+    nullable: false,
+    cascade: ['remove', 'update'],
+  })
   district: DistrictEntity
 }
 

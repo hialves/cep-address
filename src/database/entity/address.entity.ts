@@ -1,3 +1,5 @@
+import { IsCep } from '@utils/custom-decorators'
+import { IsNotEmpty, Length, Validate } from 'class-validator'
 import { Entity, Column, OneToOne, JoinColumn } from 'typeorm'
 import { CityEntity, DistrictEntity, PublicPlaceEntity, StateEntity } from '.'
 import { EntityBase } from './base'
@@ -13,25 +15,45 @@ export interface IAddress {
 
 @Entity({ name: 'address' })
 class Address extends EntityBase implements IAddress {
+  @Length(8, 8)
+  @Validate(IsCep)
+  @IsNotEmpty()
   @Column()
   cep: string
 
+  @Length(0, 255)
   @Column()
   complement: string
 
-  @OneToOne(() => StateEntity)
+  @IsNotEmpty()
+  @OneToOne(() => StateEntity, {
+    nullable: false,
+    cascade: ['remove', 'update'],
+  })
   @JoinColumn()
   state: StateEntity
 
-  @OneToOne(() => CityEntity)
+  @IsNotEmpty()
+  @OneToOne(() => CityEntity, {
+    nullable: false,
+    cascade: ['remove', 'update'],
+  })
   @JoinColumn()
   city: CityEntity
 
-  @OneToOne(() => DistrictEntity)
+  @IsNotEmpty()
+  @OneToOne(() => DistrictEntity, {
+    nullable: false,
+    cascade: ['remove', 'update'],
+  })
   @JoinColumn()
   district: DistrictEntity
 
-  @OneToOne(() => PublicPlaceEntity)
+  @IsNotEmpty()
+  @OneToOne(() => PublicPlaceEntity, {
+    nullable: false,
+    cascade: ['remove', 'update'],
+  })
   @JoinColumn()
   publicPlace: PublicPlaceEntity
 }

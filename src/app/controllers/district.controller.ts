@@ -1,15 +1,14 @@
 import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { ContentCreated, ContentDeleted, JsonResponse } from '@utils/responses'
-import { CityEntity, DistrictEntity } from '@entity/index'
-import { isValid } from '@utils/helpers'
 import {
-  ContentNotFoundException,
-  InternalServerErrorException,
-  InvalidFieldValueException,
-} from '@exceptions/index'
-import DistrictValidator from './validators/district.validator'
+  ContentCreated,
+  ContentDeleted,
+  ContentNotFound,
+  JsonResponse,
+} from '@utils/responses'
+import { DistrictEntity } from '@entity/index'
+import { InternalServerErrorException } from '@exceptions/index'
 
 class DistrictController {
   async find(req: Request, res: Response, next: NextFunction) {
@@ -17,39 +16,28 @@ class DistrictController {
 
     const repository = getRepository(DistrictEntity)
 
-    if (isValid(search)) {
-      const data = await repository.find({
-        where: { name: ILike(`%${search}%`) },
-        relations: ['city', 'publicPlaces'],
-      })
+    const data = await repository.find({
+      where: { name: ILike(`%${search}%`) },
+      relations: ['city', 'publicPlaces'],
+    })
 
-      JsonResponse(res, data)
-    } else {
-      next(new InvalidFieldValueException('search'))
-    }
+    JsonResponse(res, data)
   }
 
   async create(req: Request, res: Response, next: NextFunction) {
     const { name, cityId } = req.body
 
-    const city = await getRepository(CityEntity).findOne(cityId)
-    const repository = getRepository(DistrictEntity)
+    try {
+      const repository = getRepository(DistrictEntity)
 
-    if (city) {
       let district = new DistrictEntity()
       district.name = name
-      district.city = city
+      district.city = cityId
 
-      try {
-        if (await DistrictValidator.create(district, next)) {
-          const result = await repository.save(district)
-          ContentCreated(res, result)
-        }
-      } catch (e) {
-        next(new InternalServerErrorException(e.message))
-      }
-    } else {
-      if (!city) next(new ContentNotFoundException(cityId, 'City'))
+      const result = await repository.save(district)
+      ContentCreated(res, result)
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
@@ -77,40 +65,36 @@ class DistrictController {
     if (item) {
       JsonResponse(res, item)
     } else {
-      next(new ContentNotFoundException(id))
+      ContentNotFound(res, 'district', id)
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
 
-    const repository = getRepository(DistrictEntity)
+    try {
+      const repository = getRepository(DistrictEntity)
 
-    const found = repository.findOne(id)
-
-    if (found) {
       await repository.delete(id)
 
       ContentDeleted(res)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
-    const item = req.body
+    const item: DistrictEntity = req.body
 
-    const repository = getRepository(DistrictEntity)
+    try {
+      const repository = getRepository(DistrictEntity)
 
-    const found = repository.findOne(id)
-
-    if (found) {
       const data = await repository.update(id, item)
 
       JsonResponse(res, data)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 }

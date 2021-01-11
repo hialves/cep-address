@@ -8,26 +8,8 @@ export class InternalServerErrorException extends HttpException {
   }
 }
 
-export class InvalidFieldValueException extends HttpException {
-  constructor(field: string) {
-    super(422, `A valid ${field} field must be provided`)
-  }
-}
-
-export class ContentNotFoundException extends HttpException {
-  constructor(id: string | number, field?: string) {
-    super(404, `${field || 'Content'} not found with id: ${id}`)
-  }
-}
-
 export class RouteNotImplementedException extends HttpException {
   constructor(path: string) {
     super(400, path)
-  }
-}
-
-export class CustomException extends HttpException {
-  constructor(message: string, status: number = 400) {
-    super(status, message)
   }
 }

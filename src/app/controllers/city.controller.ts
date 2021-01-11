@@ -1,15 +1,14 @@
 import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { ContentCreated, ContentDeleted, JsonResponse } from '@utils/responses'
-import { CityEntity, StateEntity } from '@entity/index'
-import { isValid } from '@utils/helpers'
 import {
-  ContentNotFoundException,
-  InternalServerErrorException,
-  InvalidFieldValueException,
-} from '@exceptions/index'
-import CityValidator from './validators/city.validator'
+  ContentCreated,
+  ContentDeleted,
+  ContentNotFound,
+  JsonResponse,
+} from '@utils/responses'
+import { CityEntity } from '@entity/index'
+import { InternalServerErrorException } from '@exceptions/index'
 
 class CityController {
   async find(req: Request, res: Response, next: NextFunction) {
@@ -17,40 +16,28 @@ class CityController {
 
     const repository = getRepository(CityEntity)
 
-    if (isValid(search)) {
-      const data = await repository.find({
-        where: { name: ILike(`%${search}%`) },
-        relations: ['state', 'districts'],
-      })
+    const data = await repository.find({
+      where: { name: ILike(`%${search}%`) },
+      relations: ['state', 'districts'],
+    })
 
-      JsonResponse(res, data)
-    } else {
-      next(new InvalidFieldValueException('search'))
-    }
+    JsonResponse(res, data)
   }
 
   async create(req: Request, res: Response, next: NextFunction) {
     const { name, stateId } = req.body
 
-    const state = await getRepository(StateEntity).findOne(stateId)
+    try {
+      const repository = getRepository(CityEntity)
 
-    const repository = getRepository(CityEntity)
-
-    if (state) {
       let city = new CityEntity()
       city.name = name
-      city.state = state
+      city.state = stateId
 
-      try {
-        if (await CityValidator.create(city, next)) {
-          const result = await repository.save(city)
-          ContentCreated(res, result)
-        }
-      } catch (e) {
-        next(new InternalServerErrorException(e.message))
-      }
-    } else {
-      if (!state) next(new ContentNotFoundException(stateId, 'State'))
+      const result = await repository.save(city)
+      ContentCreated(res, result)
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
@@ -78,40 +65,36 @@ class CityController {
     if (item) {
       JsonResponse(res, item)
     } else {
-      next(new ContentNotFoundException(id))
+      ContentNotFound(res, 'city', id)
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
 
-    const repository = getRepository(CityEntity)
+    try {
+      const repository = getRepository(CityEntity)
 
-    const found = repository.findOne(id)
-
-    if (found) {
       await repository.delete(id)
 
       ContentDeleted(res)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
-    const item = req.body
+    const item: CityEntity = req.body
 
-    const repository = getRepository(CityEntity)
+    try {
+      const repository = getRepository(CityEntity)
 
-    const found = repository.findOne(id)
-
-    if (found) {
       const data = await repository.update(id, item)
 
       JsonResponse(res, data)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 }

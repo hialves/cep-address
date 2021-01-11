@@ -1,5 +1,13 @@
 import { EntityBase } from './base'
 import { Entity, Column } from 'typeorm'
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator'
 
 export interface IAdmin {
   name: string
@@ -9,13 +17,22 @@ export interface IAdmin {
 
 @Entity({ name: 'admin' })
 class Admin extends EntityBase implements IAdmin {
-  @Column({ unique: true })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(50)
+  @IsNotEmpty()
+  @Column({ nullable: false })
   name: string
 
-  @Column({ unique: true })
+  @IsEmail()
+  @IsNotEmpty()
+  @Column({ unique: true, nullable: false })
   email: string
 
-  @Column({ select: false })
+  @IsString()
+  @IsNotEmpty()
+  @Min(8)
+  @Column({ select: false, nullable: false })
   password: string
 }
 

@@ -1,14 +1,11 @@
 import dotenv from 'dotenv'
 dotenv.config({ path: '.env.test' })
 
-import request from 'supertest'
 import { CityEntity, StateEntity } from '@entity/index'
 import { createConnection, getConnection, getRepository } from 'typeorm'
 import { revertMigrations, truncate } from '../utils/database'
-import App from 'App'
 
 describe('Test', () => {
-  let app = new App().app
   beforeAll(async () => {
     await createConnection()
 

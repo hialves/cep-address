@@ -1,9 +1,6 @@
 export { UnauthorizedException } from './auth.exception'
-export { FieldAlreadyInUseException } from './database.exception'
 export { HttpException } from './http.exception'
 export {
   InternalServerErrorException,
-  InvalidFieldValueException,
-  ContentNotFoundException,
-  CustomException,
+  RouteNotImplementedException,
 } from './server.exception'

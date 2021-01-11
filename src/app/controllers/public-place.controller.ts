@@ -1,15 +1,14 @@
 import { getRepository, ILike } from 'typeorm'
 import { NextFunction, Request, Response } from 'express'
 
-import { ContentCreated, ContentDeleted, JsonResponse } from '@utils/responses'
-import { DistrictEntity, PublicPlaceEntity } from '@entity/index'
-import { isValid } from '@utils/helpers'
 import {
-  ContentNotFoundException,
-  InternalServerErrorException,
-  InvalidFieldValueException,
-} from '@exceptions/index'
-import PublicPlaceValidator from './validators/public-place.validator'
+  ContentCreated,
+  ContentDeleted,
+  ContentNotFound,
+  JsonResponse,
+} from '@utils/responses'
+import { PublicPlaceEntity } from '@entity/index'
+import { InternalServerErrorException } from '@exceptions/index'
 
 class PublicPlaceController {
   async find(req: Request, res: Response, next: NextFunction) {
@@ -17,39 +16,28 @@ class PublicPlaceController {
 
     const repository = getRepository(PublicPlaceEntity)
 
-    if (isValid(search)) {
-      const data = await repository.find({
-        where: { name: ILike(`%${search}%`) },
-        relations: ['district'],
-      })
+    const data = await repository.find({
+      where: { name: ILike(`%${search}%`) },
+      relations: ['district'],
+    })
 
-      JsonResponse(res, data)
-    } else {
-      next(new InvalidFieldValueException('search'))
-    }
+    JsonResponse(res, data)
   }
 
   async create(req: Request, res: Response, next: NextFunction) {
     const { name, districtId } = req.body
 
-    const district = await getRepository(DistrictEntity).findOne(districtId)
-    const repository = getRepository(PublicPlaceEntity)
+    try {
+      const repository = getRepository(PublicPlaceEntity)
 
-    if (district) {
       let publicPlace = new PublicPlaceEntity()
       publicPlace.name = name
-      publicPlace.district = district
+      publicPlace.district = districtId
 
-      try {
-        if (await PublicPlaceValidator.create(publicPlace, next)) {
-          const result = await repository.save(publicPlace)
-          ContentCreated(res, result)
-        }
-      } catch (e) {
-        next(new InternalServerErrorException(e.message))
-      }
-    } else {
-      if (!district) next(new ContentNotFoundException(districtId, 'District'))
+      const result = await repository.save(publicPlace)
+      ContentCreated(res, result)
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
@@ -76,38 +64,36 @@ class PublicPlaceController {
     if (item) {
       JsonResponse(res, item)
     } else {
-      next(new ContentNotFoundException(id))
+      ContentNotFound(res, 'publicPlace', id)
     }
   }
 
   async delete(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
 
-    const repository = getRepository(PublicPlaceEntity)
-    const found = repository.findOne(id)
+    try {
+      const repository = getRepository(PublicPlaceEntity)
 
-    if (found) {
       await repository.delete(id)
 
       ContentDeleted(res)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 
   async update(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params
-    const item = req.body
+    const item: PublicPlaceEntity = req.body
 
-    const repository = getRepository(PublicPlaceEntity)
-    const found = repository.findOne(id)
+    try {
+      const repository = getRepository(PublicPlaceEntity)
 
-    if (found) {
       const data = await repository.update(id, item)
 
       JsonResponse(res, data)
-    } else {
-      next(new ContentNotFoundException(id))
+    } catch (e) {
+      next(new InternalServerErrorException(e.message))
     }
   }
 }
