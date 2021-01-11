@@ -1,1 +1,24 @@
-[]
+{
+  "address": {
+    "cep": "10101010",
+    "complement": "setor A"
+  },
+  "admin": {
+    "name": "Admin",
+    "email": "admin@test.com",
+    "password": "test"
+  },
+  "state": {
+    "name": "Santa Catarina",
+    "uf": "SC"
+  },
+  "city": {
+    "name": "Joinville"
+  },
+  "district": {
+    "name": "Nova Brasília"
+  },
+  "publicPlace": {
+    "name": "Random"
+  }
+}

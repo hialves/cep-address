@@ -6,14 +6,16 @@ export class AdressForeignKeys1609975688343 implements MigrationInterface {
     await queryRunner.addColumn('address', new TableColumn({name: 'districtId', type: 'integer'}))
     await queryRunner.addColumn('address', new TableColumn({name: 'cityId', type: 'integer'}))
     await queryRunner.addColumn('address', new TableColumn({name: 'stateId', type: 'integer'}))
-    await queryRunner.addColumn('address', new TableColumn({name: 'public_placeId', type: 'integer'}))
+    await queryRunner.addColumn('address', new TableColumn({name: 'publicPlaceId', type: 'integer'}))
 
     await queryRunner.createForeignKey(
       'address',
       new TableForeignKey({
         columnNames: ['districtId'],
         referencedTableName: 'district',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     )
     await queryRunner.createForeignKey(
@@ -21,7 +23,9 @@ export class AdressForeignKeys1609975688343 implements MigrationInterface {
       new TableForeignKey({
         columnNames: ['cityId'],
         referencedTableName: 'city',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     )
     await queryRunner.createForeignKey(
@@ -29,15 +33,19 @@ export class AdressForeignKeys1609975688343 implements MigrationInterface {
       new TableForeignKey({
         columnNames: ['stateId'],
         referencedTableName: 'state',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     )
     await queryRunner.createForeignKey(
       'address',
       new TableForeignKey({
-        columnNames: ['public_placeId'],
+        columnNames: ['publicPlaceId'],
         referencedTableName: 'public_place',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     )
   }
@@ -46,7 +54,7 @@ export class AdressForeignKeys1609975688343 implements MigrationInterface {
     await queryRunner.dropColumn('address', 'districtId')
     await queryRunner.dropColumn('address', 'cityId')
     await queryRunner.dropColumn('address', 'stateId')
-    await queryRunner.dropColumn('address', 'public_placeId')
+    await queryRunner.dropColumn('address', 'publicPlaceId')
   }
 
 }

@@ -10,7 +10,9 @@ export class CityForeignKeys1609974640496 implements MigrationInterface {
       new TableForeignKey({
         columnNames: ['stateId'],
         referencedTableName: 'state',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     );
   }

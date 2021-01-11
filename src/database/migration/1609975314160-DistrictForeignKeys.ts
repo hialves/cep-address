@@ -10,7 +10,9 @@ export class DistrictForeignKeys1609975314160 implements MigrationInterface {
       new TableForeignKey({
         columnNames: ['cityId'],
         referencedTableName: 'city',
-        referencedColumnNames: ['id']
+        referencedColumnNames: ['id'],
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       })
     );
   }
